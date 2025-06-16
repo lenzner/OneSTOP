@@ -18,7 +18,8 @@ getwd()
 pacman::p_load(viridis, rredlist, tidyverse)
 sessionInfo()
 
-# Package versions used in this script: 
+# R and Package versions used in this script: 
+# R version 4.4.2 
 # viridis_0.6.5
 # rredlist_1.0.0    
 # tidyverse_2.0.0  
@@ -44,7 +45,7 @@ read_species_files <- function(cat, file_type){
   sp_list <- list.files(file.path(base_path, cat))
   
   # map applies a function to each element of a list or vector, returning an object of the same length
-  sp_data <- map(sp_list, function(sp){
+  sp_data <- purrr::map(sp_list, function(sp){
     
     # here, "file_type" will be assigned later as one of the "general_info", "habitats", etc
     file_path <- file.path(base_path, cat, sp, paste0(sp, "_", file_type, ".csv"))
