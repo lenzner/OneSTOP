@@ -13,13 +13,15 @@
 # Setting up the R environment
 rm(list=ls())
 setwd("D:/Work/oneSTOP")
+#setwd("/home/biodiversity/tedeschil/R/range_fit")
 getwd()
 
 # Load required packages
 pacman::p_load(viridis, rredlist, tidyverse)
 sessionInfo()
 
-# Package versions used in this script: 
+# R and Package versions used in this script: 
+# R version 4.4.2 
 # viridis_0.6.5
 # rredlist_1.0.0    
 # tidyverse_2.0.0   
@@ -48,32 +50,37 @@ IUCN_REDLIST_KEY = "P4DKTzW7G9LUdae4NPifBzkbcnN51w9YSV17"
 
 ## 1.1 Get the assessment IDs for the species in Europe categorized as CR
 rl_CR_assessments <- rl_categories(code = "CR",
-                                    #latest = T,
+                                    latest = T,
                                     scope_code = 2,
                                     key = IUCN_REDLIST_KEY)$assessments
 
-length(rl_CR_assessments$assessment_id) # 1011 assessments in Europe for species with CR category if i don't keep only the latest ones
-length(rl_CR_assessments$assessment_id) # 768 assessments in Europe for species with CR category if i keep only the latest ones
+length(rl_CR_assessments$assessment_id) 
+# 1011 assessments in Europe for species with CR category if i don't keep only the latest ones
+# 768 assessments in Europe for species with CR category if i keep only the latest ones
 
 
 
 ## 1.2 Get the assessment IDs for the species in Europe categorized as EN
 rl_EN_assessments <- rl_categories(code = "EN",
-                                    #latest = T,
+                                    latest = T,
                                     scope_code = 2,
                                     key = IUCN_REDLIST_KEY)$assessments
 
-length(rl_EN_assessments$assessment_id) # 1800 assessments in Europe for species with EN category if i don't keep only the latest ones
+length(rl_EN_assessments$assessment_id) 
+# 1800 assessments in Europe for species with EN category if i don't keep only the latest ones
+# 1455assessments in Europe for species with EN category if i keep only the latest ones
 
 
 
 ## 1.3 Get the assessment IDs for the species in Europe categorized as VU
 rl_VU_assessments <- rl_categories(code = "VU",
-                                    #latest = T,
+                                    latest = T,
                                     scope_code = 2,
                                     key = IUCN_REDLIST_KEY)$assessments
 
-length(rl_VU_assessments$assessment_id) # 2089 assessments in Europe for species with VU category if i don't keep only the latest ones
+length(rl_VU_assessments$assessment_id) 
+# 2089 assessments in Europe for species with VU category if i don't keep only the latest ones
+# 1514 assessments in Europe for species with CR category if i keep only the latest ones
 
 
 
@@ -141,6 +148,13 @@ assessment_realms <- function(x) {
         assessment_id	= x$assessment_id %||% NA_character_,
         sis_id = x$taxon$sis_id %||% NA_character_,
         scientific_name = x$taxon$scientific_name %||% NA_character_,
+        kingdom_name = x$taxon$kingdom_name %||% NA_character_,
+        phylum_name = x$taxon$phylum_name %||% NA_character_,
+        class_name = x$taxon$class_name %||% NA_character_,
+        order_name = x$taxon$order_name %||% NA_character_,
+        family_name = x$taxon$family_name %||% NA_character_,   
+        genus_name = x$taxon$genus_name %||% NA_character_,
+        species_name = x$taxon$species_name %||% NA_character_,   
         rl_category = x$red_list_category$code %||% NA_character_,
         
         biogeographical_realms = unlist(x$biogeographical_realms$description[[1]]) #[[1]], collapse = "; ")
@@ -164,6 +178,13 @@ assessment_locations <- function(x) {
         assessment_id	= x$assessment_id %||% NA_character_,
         sis_id = x$taxon$sis_id %||% NA_character_,
         scientific_name = x$taxon$scientific_name %||% NA_character_,
+        kingdom_name = x$taxon$kingdom_name %||% NA_character_,
+        phylum_name = x$taxon$phylum_name %||% NA_character_,
+        class_name = x$taxon$class_name %||% NA_character_,
+        order_name = x$taxon$order_name %||% NA_character_,
+        family_name = x$taxon$family_name %||% NA_character_,   
+        genus_name = x$taxon$genus_name %||% NA_character_,
+        species_name = x$taxon$species_name %||% NA_character_,   
         rl_category = x$red_list_category$code %||% NA_character_,
         
         location_endemism = unlist(x$locations$is_endemic),
@@ -185,6 +206,13 @@ assessment_locations <- function(x) {
         assessment_id	= x$assessment_id %||% NA_character_,
         sis_id = x$taxon$sis_id %||% NA_character_,
         scientific_name = x$taxon$scientific_name %||% NA_character_,
+        kingdom_name = x$taxon$kingdom_name %||% NA_character_,
+        phylum_name = x$taxon$phylum_name %||% NA_character_,
+        class_name = x$taxon$class_name %||% NA_character_,
+        order_name = x$taxon$order_name %||% NA_character_,
+        family_name = x$taxon$family_name %||% NA_character_,   
+        genus_name = x$taxon$genus_name %||% NA_character_,
+        species_name = x$taxon$species_name %||% NA_character_,   
         rl_category = x$red_list_category$code %||% NA_character_,
         
         location_origin = NA_character_,
@@ -212,6 +240,13 @@ assessment_threats <- function(x){
       assessment_id	= x$assessment_id %||% NA_character_,
       sis_id = x$taxon$sis_id %||% NA_character_,
       scientific_name = x$taxon$scientific_name %||% NA_character_,
+      kingdom_name = x$taxon$kingdom_name %||% NA_character_,
+      phylum_name = x$taxon$phylum_name %||% NA_character_,
+      class_name = x$taxon$class_name %||% NA_character_,
+      order_name = x$taxon$order_name %||% NA_character_,
+      family_name = x$taxon$family_name %||% NA_character_,   
+      genus_name = x$taxon$genus_name %||% NA_character_,
+      species_name = x$taxon$species_name %||% NA_character_,   
       rl_category = x$red_list_category$code %||% NA_character_,
       
       threat_scope = x$threats$scope,
@@ -230,6 +265,13 @@ assessment_threats <- function(x){
       assessment_id	= x$assessment_id %||% NA_character_,
       sis_id = x$taxon$sis_id %||% NA_character_,
       scientific_name = x$taxon$scientific_name %||% NA_character_,
+      kingdom_name = x$taxon$kingdom_name %||% NA_character_,
+      phylum_name = x$taxon$phylum_name %||% NA_character_,
+      class_name = x$taxon$class_name %||% NA_character_,
+      order_name = x$taxon$order_name %||% NA_character_,
+      family_name = x$taxon$family_name %||% NA_character_,   
+      genus_name = x$taxon$genus_name %||% NA_character_,
+      species_name = x$taxon$species_name %||% NA_character_,   
       rl_category = x$red_list_category$code %||% NA_character_,
       
       threat_scope = NA_character_,
@@ -258,6 +300,13 @@ assessment_habitats <- function(x){
       assessment_id	= x$assessment_id %||% NA_character_,
       sis_id = x$taxon$sis_id %||% NA_character_,
       scientific_name = x$taxon$scientific_name %||% NA_character_,
+      kingdom_name = x$taxon$kingdom_name %||% NA_character_,
+      phylum_name = x$taxon$phylum_name %||% NA_character_,
+      class_name = x$taxon$class_name %||% NA_character_,
+      order_name = x$taxon$order_name %||% NA_character_,
+      family_name = x$taxon$family_name %||% NA_character_,   
+      genus_name = x$taxon$genus_name %||% NA_character_,
+      species_name = x$taxon$species_name %||% NA_character_,   
       rl_category = x$red_list_category$code %||% NA_character_,
       
       habitats_season = x$habitats$season, 
@@ -277,6 +326,13 @@ assessment_habitats <- function(x){
       assessment_id	= x$assessment_id %||% NA_character_,
       sis_id = x$taxon$sis_id %||% NA_character_,
       scientific_name = x$taxon$scientific_name %||% NA_character_,
+      kingdom_name = x$taxon$kingdom_name %||% NA_character_,
+      phylum_name = x$taxon$phylum_name %||% NA_character_,
+      class_name = x$taxon$class_name %||% NA_character_,
+      order_name = x$taxon$order_name %||% NA_character_,
+      family_name = x$taxon$family_name %||% NA_character_,   
+      genus_name = x$taxon$genus_name %||% NA_character_,
+      species_name = x$taxon$species_name %||% NA_character_,   
       rl_category = x$red_list_category$code %||% NA_character_,
       
       habitats_season = NA_character_, 
@@ -294,25 +350,9 @@ assessment_habitats <- function(x){
 ## 2.6 Put everything together
 
 # create a list of codes because I need to keep only IUCN RL species threatened by IAS
-ias_codes <- c("8", 
-               "8_1", "8_2", "8_3", "8_4", "8_5", "8_6",
-               "8_1_1", "8_1_2",
-               "8_2_1", "8_2_2",
-               "8_4_1", "8_4_2",
-               "8_5_1", "8_5_2")
+ias_codes <- c("8", "8_1", "8_1_1", "8_1_2")
 
-# and list the habitats we want to remove (wetlands # 5, marine # 6) - TO DISCUSS: amphibians in wetlands?
-habitats_code <- c("5",
-                   "5_1", "5_2", "5_3", "5_4", "5_5", "5_6", "5_7", "5_8", "5_9",
-                   "5_10", "5_11", "5_12", "5_13", "5_14", "5_15", "5_16", "5_17", "5_18",
-                   "9",
-                   "9_1", "9_2", "9_3", "9_4", "9_5", "9_6", "9_7", "9_8", "9_9", "9_10",
-                   "9_8_1","9_8_2","9_8_3","9_8_4","9_8_5", "9_8_6",
-                   "10_1", "10_2", "10_3", "10_4",
-                   "11_1", "11_2", "11_3", "11_4", "11_5", "11_6",
-                   "11_1_1", "11_1_2")
-
-
+# function to extract the info needed from the assessments
 clean_assessments <- function(x) {  
   
   # extract the species only if it's threatened by IAS
@@ -321,58 +361,42 @@ clean_assessments <- function(x) {
   # so sum them and, if if() is >= 1, then continue with the function
   if( sum(ias_codes %in% x$threats$code) ){
     
-      # extract species name
-      sp <- sub(" ", "_", unique(x$taxon$scientific_name)) 
-    
-      # extract the species only if it's also terrestrial  
-      # here the number is the same only is the species has all habitats listed among the ones we don't want to keep
-      # meaning: first I sum how many of the habitats of the species are among the ones I don't want to keep: sum(habitats_code %in% x$habitats$code)
-      # then, if this number is the same as the total habitats of the species (== length(x$habitats$code)), it means the species is only present in the habitats we don't want
-      # so in that case I need to skip it
-      if ( sum(habitats_code %in% x$habitats$code) == length(x$habitats$code) ) {        
-
-        # extract species name
-        sp <- unique(x$taxon$scientific_name) 
+    # extract species name
+    sp <- sub(" ", "_", unique(x$taxon$scientific_name)) 
+      
+      # create directory for species sp, if it doesn't exist
+      if( !dir.exists(paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp)) ){
         
-        print(paste0("........ Skipping species ", sp, ", since it's only freshwater/marine. (assessment ID: ", x$assessment_id, ")"))
+        dir.create(paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp))
         
-        }else if ( isFALSE(sum(habitats_code %in% x$habitats$code) == length(x$habitats$code)) ){
-    
-          # create directory for species sp, if it doesn't exist
-          if( !dir.exists(paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp)) ){
-            
-            dir.create(paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp))
-            
-          }
-          
-          # save general info of the species sp
-          write.csv(assessment_general_info(x), 
-                    paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp, "/", sp, "_general_info.csv"),
-                    row.names = F)
-          
-          # save biogeographical realm info
-          write.csv(assessment_realms(x), 
-                    paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp, "/", sp, "_realms.csv"),
-                    row.names = F)
-          
-          # save habitats info 
-          write.csv(assessment_habitats(x), 
-                    paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp, "/", sp, "_habitats.csv"),
-                    row.names = F)
-          
-          # save location info
-          write.csv(assessment_locations(x), 
-                    paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp, "/", sp, "_locations.csv"),
-                    row.names = F)
-          
-          # save threats info 
-          write.csv(assessment_threats(x), 
-                    paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp, "/", sp, "_threats.csv"),
-                    row.names = F)
-          
-          gc()
-    
       }
+      
+      # save general info of the species sp
+      write.csv(assessment_general_info(x), 
+                paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp, "/", sp, "_general_info.csv"),
+                row.names = F)
+      
+      # save biogeographical realm info
+      write.csv(assessment_realms(x), 
+                paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp, "/", sp, "_realms.csv"),
+                row.names = F)
+      
+      # save habitats info 
+      write.csv(assessment_habitats(x), 
+                paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp, "/", sp, "_habitats.csv"),
+                row.names = F)
+      
+      # save location info
+      write.csv(assessment_locations(x), 
+                paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp, "/", sp, "_locations.csv"),
+                row.names = F)
+      
+      # save threats info 
+      write.csv(assessment_threats(x), 
+                paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp, "/", sp, "_threats.csv"),
+                row.names = F)
+      
+      gc()
     
   }else{
     
@@ -382,7 +406,7 @@ clean_assessments <- function(x) {
     
     print(paste0("........ Skipping species ", sp, ", since it's not threatened by IAS. (assessment ID: ", x$assessment_id, ")"))
     
-    } 
+  } 
   
 }
 
@@ -452,4 +476,4 @@ old_files[which(!old_files %in% new_files)]
 length(new_files) + length(old_files[which(!old_files %in% new_files)]) == length(old_files)
 
   
-
+  
