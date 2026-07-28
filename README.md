@@ -1,6 +1,6 @@
 # OneSTOP UNIVIE Repository
 
-This GitHub repository is associated with the Horizon Europe Project OneSTOP #101180559. The project aims at enhancing biosecurity and managing terrestrial invasive alien species (IAS). This repository stores code and workflows developed by the project team (Task 5.4) at the University of Vienna (UNIVIE). The team is composed by [Lisa Tedeschi](https://lisa-tedeschi.github.io/) and [Bernd Lenzner](https://lenzner.github.io/) (task leader). 
+This GitHub repository is associated with the Horizon Europe Project OneSTOP #101180559. The project aims at enhancing biosecurity and managing terrestrial invasive alien species (IAS). This repository stores code and workflows developed by the project team (Task 5.4) at the University of Vienna (UNIVIE). The team is composed by Anna Schertler and [Bernd Lenzner](https://lenzner.github.io/) (task leader), and formerly [Lisa Tedeschi](https://lisa-tedeschi.github.io/).
 
 ## About OneSTOP
 
