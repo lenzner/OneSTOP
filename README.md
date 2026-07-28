@@ -24,6 +24,6 @@ In the OneSTOP project, the UNIVIE team will develop prioritisation maps for IUC
 
 ------------------------------------------------------------------------
 
-![](eu_funded_en.png)
+![](https://github.com/lenzner/OneSTOP/blob/main/pictures/eu_funded_en.png)
 
 OneSTOP receives funding from the European Union Horizon Europe Research and Innovation Programme (ID No 101180559). Views and opinions expressed are those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Executive Agency (REA). Neither the EU nor REA can be held responsible for them.
