@@ -1,6 +1,6 @@
 # Files description
 ------------------------------------------------------------------------
-All the files created in OneSTOP are stored in the Zenodo repository [link]
+All the files created in OneSTOP are stored in the Zenodo repository (Tedeschi & Lenzner 2026).
 - sp_general_info_clean.csv: contains basic information for the IUCN RL species assessments of the study species. 
 - mapped_IUCN_RL_sp_taxa.csv: contains all the species' names checked against the GBIF backbone, following wiSDM 2.0
 - mapped_IUCN_RL_sp_accepted_taxonkeys.txt: contains all the species' taxonomic keys (to use on GBIF) checked against the GBIF backbone, following wiSDM 2.0
@@ -10,6 +10,9 @@ All the files created in OneSTOP are stored in the Zenodo repository [link]
 
 ## Add
 
+# References
+
+Tedeschi L, Lenzner B (2026) Data for native and invasive species distribution modelling in Europe - OneSTOP Project Task 5.4. Zenodo. 10.5281/zenodo.21649051
 ------------------------------------------------------------------------
 
 ![](https://github.com/lenzner/OneSTOP/blob/main/pictures/eu_funded_en.png)
