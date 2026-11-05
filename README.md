@@ -28,7 +28,7 @@ This repository mostly contains the R scripts used to perform SDMs for European 
 
 For native species, models were performed using three different sets of input data (GBIF, GBIF + pseudopresences, pseudopresences). For the IAS, the input data was sourced only from GBIF. The whole modeling framework consists of a global climate model (e.g., script global_model_GBIF.R), a European habitat model (e.g., script habitat_model_GBIF.R), and spatial cross-block validation (e.g., script CV_GBIF.R).
 
-R scripts are renamed accordingly: the endings (_GBIF, _GBIF_pseudopresences, _pseudopresences) represent the input data used in the script. The additional suffix _IAS identifies the script for IAS SDMs.   
+R scripts are renamed accordingly: the suffixes "_GBIF", "_GBIF_pseudopresences", and "_pseudopresences" represent the input data used in the script. The additional suffix "_IAS" identifies the script for IAS SDMs. If no suffix is used, the script refers to native species.   
 
 For details regarding the modeling process, please refer to OneSTOP Task5.4 Milestone (to be published in February 2027), [OneSTOP Task5.1 Deliverable](https://onestop-project.eu/library/deliverables-milestones/search/d5.1), and [wiSDM2.0]([https://onestop-project.eu/](https://github.com/trias-project/risk-modelling-and-mapping)).
 
