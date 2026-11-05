@@ -30,7 +30,7 @@ For native species, models were performed using three different sets of input da
 
 R scripts are renamed accordingly: the suffixes "_GBIF", "_GBIF_pseudopresences", and "_pseudopresences" represent the input data used in the script. The additional suffix "_IAS" identifies the script for IAS SDMs. If no suffix is used, the script refers to native species.   
 
-For details regarding the modeling process, please refer to OneSTOP Task5.4 Milestone (to be published latest in March 2027), [OneSTOP Task5.1 Deliverable](https://onestop-project.eu/library/deliverables-milestones/search/d5.1), and [wiSDM2.0]([https://onestop-project.eu/](https://github.com/trias-project/risk-modelling-and-mapping)).
+For details regarding the modeling process, please refer to OneSTOP Task5.4 Milestone (to be published latest in March 2027), [OneSTOP Task5.1 Deliverable](https://onestop-project.eu/library/deliverables-milestones/search/d5.1), and [wiSDM2.0]([https://onestop-project.eu/](https://github.com/trias-project/risk-modelling-and-mapping]).
 
 ------------------------------------------------------------------------
 
