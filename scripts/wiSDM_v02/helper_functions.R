@@ -1255,6 +1255,9 @@ compute_median_favourability_LT<-function(model,
   #---------------------------
   
   env_favourability <- list()
+  
+  message("Using compute_median_favourability adapted by LT")
+  
   for(modelmethod in top5_methods){
     
     message("Predicting for method: ", modelmethod,".")
