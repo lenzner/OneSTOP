@@ -187,20 +187,6 @@ if(project_projection == "+proj=cea +lat_ts=30 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS
 split_df <- global_gbif %>% filter(species == sp)
 taxonkey <- unique(split_df$speciesKey)
 species <- sp
-
-# # if there is a value in acceptedUsageKey, use that one
-# # otherwise use speciesKey
-# if(!is.na(unique(split_df$acceptedTaxonKey))){
-#   
-#   message(sp, " is a synonym - using accepted taxon key...")
-#   taxonkey <- unique(split_df$acceptedUsageKey)
-#   
-# }else{
-#   
-#   taxonkey <- unique(split_df$speciesKey)
-#   
-# }
-
 speciesName <- sub("^(\\w+)\\s+(\\w+).*", "\\1_\\2", species)  # Extract first two words of species name
 speciesgroup <- unique(split_df$Group)
 rm(global_gbif)
@@ -313,7 +299,7 @@ validation_summary <- list()
 # - # - # - # - # - # - # - # - # - # - # - # - #
 
 species_validation_summary <- data.frame()
-  
+
 #--------------------------------------------
 #----------- Load species details -----------
 #--------------------------------------------
@@ -720,22 +706,53 @@ if (use_cv || use_cv_climate_only) {
                      occ_env       = global_env$presences,
                      abs_env       = global_env$absences)
     
-    # Extract data for validation in Europe
-    if(eu_climate_validation){
+    # occ_env and abs_env are global, and they come from test_data, 
+    # the global test records of that fold (global_presabs_perfold filtered to folds == fold)
+    
+    # # Extract data for validation in Europe
+    # if(eu_climate_validation){
+    #   
+    #   # eu_test_data  <- test_data %>%
+    #   #   sf::st_filter(euboundary_wgs84)
+    # 
+    #   eu_test_data <- test_data %>%
+    #     sf::st_filter(sf::st_as_sfc(sf::st_bbox(euboundary))) # using bounding box to avoid loosing e.g., Malta
+    #   
+    #   eu_env <- extract_env(eu_test_data, climate_selection)
+    #   datasets$eu_occ_env <- eu_env$presences
+    #   datasets$eu_abs_env <- eu_env$absences
+    # }
+    # 
+    # # Extract data for validation of ensemble model
+    # if(ensemble_validation & !use_cv_climate_only){
+    #   ensemble_test_data <- eu_presabs_perfold %>%
+    #     dplyr::filter(folds == fold)
+    #   
+    #   ensemble_env <- extract_env(ensemble_test_data, climate_selection)
+    #   datasets$ens_occ_env <- ensemble_env$presences
+    #   datasets$ens_abs_env <- ensemble_env$absences
+    # }
+    
+    # Extract European test records (needed for climate-in-Europe and/or ensemble validation)
+    if (eu_climate_validation || (ensemble_validation && use_cv_climate_only)) {
       
-      # eu_test_data  <- test_data %>%
-      #   sf::st_filter(euboundary_wgs84)
-
       eu_test_data <- test_data %>%
-        sf::st_filter(sf::st_as_sfc(sf::st_bbox(euboundary))) # using bounding box to avoid loosing e.g., Malta
+        sf::st_filter(sf::st_as_sfc(sf::st_bbox(euboundary))) # bbox to avoid losing e.g., Malta
       
       eu_env <- extract_env(eu_test_data, climate_selection)
-      datasets$eu_occ_env <- eu_env$presences
-      datasets$eu_abs_env <- eu_env$absences
+      
+      if (eu_climate_validation) {
+        datasets$eu_occ_env <- eu_env$presences
+        datasets$eu_abs_env <- eu_env$absences
+      }
+      if (ensemble_validation && use_cv_climate_only) {
+        datasets$ens_occ_env <- eu_env$presences
+        datasets$ens_abs_env <- eu_env$absences
+      }
     }
     
-    # Extract data for validation of ensemble model
-    if(ensemble_validation & !use_cv_climate_only){
+    # Ensemble validation with separate European records 
+    if (ensemble_validation && !use_cv_climate_only) {
       ensemble_test_data <- eu_presabs_perfold %>%
         dplyr::filter(folds == fold)
       
@@ -743,6 +760,10 @@ if (use_cv || use_cv_climate_only) {
       datasets$ens_occ_env <- ensemble_env$presences
       datasets$ens_abs_env <- ensemble_env$absences
     }
+    
+    # eu_* and ens_* records are not the same in every fold,
+    # They are extracted from eu_test_data, which is test_data filtered to Europe, 
+    # and test_data changes with every fold
     
     # Add EU background data for validation of ensemble and Europe
     if (eu_climate_validation || ensemble_validation) {datasets$eu_points  <- eu_points}
@@ -855,14 +876,14 @@ if (use_cv || use_cv_climate_only) {
     
     # Extract data for global validation
     global_env <- extract_env(global_presabs, climate_selection)
-
+    
     datasets <- list(global_points = global_points,
                      occ_env       = global_env$presences,
                      abs_env       = global_env$absences)
-
+    
     # Extract data for validation in Europe
     if(eu_climate_validation){
-
+      
       # euboundary_presabs  <- global_presabs%>%
       #   sf::st_filter(euboundary_wgs84)
       
@@ -897,9 +918,9 @@ if (use_cv || use_cv_climate_only) {
   #-----------------------------------------------------------
   
   median_fav_climate <- compute_median_favourability(model,
-                                                    datasets,
-                                                    top5_methods,
-                                                    prev_ratio)
+                                                     datasets,
+                                                     top5_methods,
+                                                     prev_ratio)
   
   
   #-----------------------------------------
@@ -998,7 +1019,7 @@ if(use_cv || use_cv_climate_only){
     
     # Store summary in species validation df
     eu_validation_clim_mean <- summarise_validation(eu_validation_climate,
-                                                  validation = "No cross-validation")
+                                                    validation = "No cross-validation")
     
     species_validation_summary <- species_validation_summary%>%
       dplyr::bind_rows(eu_validation_clim_mean)
@@ -1166,7 +1187,7 @@ if (use_cv) {
                                                                                 habitat_datasets,
                                                                                 top5_habitat_methods,
                                                                                 prev_ratio)
-
+    
     #-----------------------------------------
     #------- Compute Boyce, AUC, and TSS -----
     #-----------------------------------------
@@ -1255,9 +1276,9 @@ if (use_cv) {
   #----------------------------------------------------------------------
   
   median_fav_habitat <- compute_median_favourability(habitat_model,
-                                                    habitat_datasets,
-                                                    top5_habitat_methods,
-                                                    prev_ratio)
+                                                     habitat_datasets,
+                                                     top5_habitat_methods,
+                                                     prev_ratio)
   
   
   #-----------------------------------------
@@ -1391,14 +1412,16 @@ if (use_cv) {
     
     # 2. European occurrences: combine out-of-fold test predictions and order by ID
     ens_occ_env_synth <- dplyr::bind_rows(
-      lapply(median_favourability_climate_perfold, `[[`, "eu_occ_env")
+      #lapply(median_favourability_climate_perfold, `[[`, "eu_occ_env")
+      lapply(median_favourability_climate_perfold, `[[`, "ens_occ_env")
     ) %>%
       dplyr::distinct(ID, .keep_all = TRUE) %>%
       dplyr::arrange(ID)
     
     # 3. European absences/background: combine out-of-fold test predictions and order by ID
     ens_abs_env_synth <- dplyr::bind_rows(
-      lapply(median_favourability_climate_perfold, `[[`, "eu_abs_env")
+      #lapply(median_favourability_climate_perfold, `[[`, "eu_abs_env")
+      lapply(median_favourability_climate_perfold, `[[`, "ens_abs_env")
     ) %>%
       dplyr::distinct(ID, .keep_all = TRUE) %>%
       dplyr::arrange(ID)
@@ -1414,7 +1437,6 @@ if (use_cv) {
   # Extract median favourability for habitat and climate
   hab_fav <- median_fav_habitat
   clim_fav <- median_fav_climate
-  
   
   # Generate ensemble favourability for background points, occs, and abs.
   ensemble_background_fav <- ensemble_geom_mean(hab_fav$eu_habitat_points, clim_fav$eu_points, type="background")
@@ -1485,7 +1507,7 @@ validation_summary[[speciesName]] <- species_validation_summary
 
 final_validation <- bind_rows(validation_summary)
 final_validation$project_name <- projectname
-  
+
 readr::write_csv(final_validation,
                  file.path(validation_dir, "Validation_summary.csv"))
 
