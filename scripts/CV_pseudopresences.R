@@ -10,6 +10,7 @@
 # (climate, habitat, and combined models)
 # using the new wiSDM version
 # using pseudo-presences sampled from IUCN and AOH
+# with added fallbacks for the object "median_fav_climate"
 # based on oneSTOP Task5.1 scripts
 # and wiSDM_v02
 
@@ -86,13 +87,17 @@ start_time <- Sys.time()
 #-------------------------------------------------------------------------------
 
 # Global climate stack
+# climate_path <- file.path("data", "external", "climate", "chelsa_current","processed", "globalclimpreds.tif")
 processed_folder <- paste0(database_path, "/CHELSA_V2.1/chelsa_current")
 climate_path <- file.path(processed_folder, "globalclimpreds.tif")
 
 # EU climate stack
+# eu_climpreds_path <- file.path("data", "external", "climate", "chelsa_current","processed","euclimpreds.tif")
 eu_climpreds_path <- paste0(processed_folder, "/euclimpreds.tif")
 
 # EU habitat stack
+# habitat_path <- file.path("data", "external", "habitat", "processed", "habitat_stack.tif")
+
 habitat_path <- paste0(database_path, "/Chen_et_al_2022/Global_PFT_Projections_recl_eur_mw3/global_PFT_2015_recl_eur_mw3.tif")
 
 # Biomes/ecoregions
@@ -211,6 +216,11 @@ rm(global)
 #------------ Load euboundary  --------------
 #--------------------------------------------
 
+# euboundary_path<-file.path("data", "external", "GIS", "Europe", "EUboundary.shp")
+# euboundary<-sf::st_read(euboundary_path)
+# euboundary_wgs84<-euboundary%>%
+#   sf::st_transform(crs = 4326)
+
 lulc_folder <- paste0(database_path, "/Chen_et_al_2022/Global_PFT_Projections_recl_eur_mw3")
 euboundary <- terra::rast(paste0(lulc_folder, "/", list.files(lulc_folder)[1]))
 
@@ -308,13 +318,19 @@ validation_summary <- list()
 # - # - # - # - # - # - # - # - # - # - # - # - #
 
 species_validation_summary <- data.frame()
-  
+
 #--------------------------------------------
 #----------- Load species details -----------
 #--------------------------------------------
 
 speciesName <- sub("^(\\w+)\\s+(\\w+).*", "\\1_\\2", species)  # Extract first two words of species name
 
+# message(
+#   "\n", strrep("=", 72),
+#   "\nSPECIES: ", speciesName,
+#   "  [taxonkey: ", taxonkey, "]",
+#   "\n", strrep("=", 72)
+# )
 
 #==============================================
 #=                                            =
@@ -351,7 +367,13 @@ global_presabs <- climatemodel$global_presabs
 climate_predictors <- climatemodel$selected_predictors
 suppressWarnings(rm(climatemodel, pres, abs))
 
+# check if the species has already been validates
+validation_summary_file <- file.path(validation_dir, "Validation_summary.csv")
 
+if(file.exists(validation_summary_file)){ 
+  message("Models have been already validated for ", speciesName, ". Skipping.")
+  quit(save = "no", status = 0)
+}
 
 #-------------------------------------------------------
 #------------------ Define validation types ------------
@@ -450,6 +472,12 @@ if(pseudo_absences_background == "continents"){
 # Keep only biome polygons that intersect at least one occurrence point
 global_presences<-dplyr::filter(global_presabs, species==1)
 
+# sf::sf_use_s2(FALSE)
+# has_occurrence <- lengths(sf::st_intersects(wwf_eco_biome, global_presences)) > 0
+# wwf_ecoSub1 <- wwf_eco_biome[has_occurrence, ]
+# rm(wwf_eco_biome)
+# sf::sf_use_s2(TRUE)
+
 # Disable S2 geometry engine to avoid topological issues
 sf::sf_use_s2(FALSE)
 
@@ -530,6 +558,9 @@ if(ensemble_validation){
     
   }else{
     eu_presabs <- eu_presabs%>%
+      dplyr::mutate(ID = dplyr::row_number())
+    
+    global_presabs <- global_presabs %>%
       dplyr::mutate(ID = dplyr::row_number())
   }
   
@@ -648,8 +679,8 @@ if (use_cv || use_cv_climate_only) {
         cv_folds <- cv_folds - 1L
         
       }
-      }
-
+    }
+    
     if(nrow(eu_presabs_perfold)!=nrow(eu_presabs)){
       warning(nrow(eu_presabs)- nrow(eu_presabs_perfold)," Ensemble model point(s) not assigned to a fold and removed from dataset.")
     }
@@ -747,8 +778,8 @@ if (use_cv || use_cv_climate_only) {
     if(length(successful_methods) != length(top5_methods)){
       message("Not all the top 5 algorithms were successful in fold number ", fold, "! Reducing them to ", length(successful_methods))
       top5_methods <- successful_methods
-      }
-
+    }
+    
     #-----------------------------------------------------------
     #------ Prepare datasets with climate data for predictions --
     #-----------------------------------------------------------
@@ -763,22 +794,53 @@ if (use_cv || use_cv_climate_only) {
                      occ_env       = global_env$presences,
                      abs_env       = global_env$absences)
     
-    # Extract data for validation in Europe
-    if(eu_climate_validation){
+    # occ_env and abs_env are global, and they come from test_data, 
+    # the global test records of that fold (global_presabs_perfold filtered to folds == fold)
+    
+    # # Extract data for validation in Europe
+    # if(eu_climate_validation){
+    #   
+    #   # eu_test_data  <- test_data %>%
+    #   #   sf::st_filter(euboundary_wgs84)
+    # 
+    #   eu_test_data <- test_data %>%
+    #     sf::st_filter(sf::st_as_sfc(sf::st_bbox(euboundary))) # using bounding box to avoid loosing e.g., Malta
+    #   
+    #   eu_env <- extract_env(eu_test_data, climate_selection)
+    #   datasets$eu_occ_env <- eu_env$presences
+    #   datasets$eu_abs_env <- eu_env$absences
+    # }
+    # 
+    # # Extract data for validation of ensemble model
+    # if(ensemble_validation & !use_cv_climate_only){
+    #   ensemble_test_data <- eu_presabs_perfold %>%
+    #     dplyr::filter(folds == fold)
+    #   
+    #   ensemble_env <- extract_env(ensemble_test_data, climate_selection)
+    #   datasets$ens_occ_env <- ensemble_env$presences
+    #   datasets$ens_abs_env <- ensemble_env$absences
+    # }
+    
+    # Extract European test records (needed for climate-in-Europe and/or ensemble validation)
+    if (eu_climate_validation || (ensemble_validation && use_cv_climate_only)) {
       
-      # eu_test_data  <- test_data %>%
-      #   sf::st_filter(euboundary_wgs84)
-
       eu_test_data <- test_data %>%
-        sf::st_filter(sf::st_as_sfc(sf::st_bbox(euboundary))) # using bounding box to avoid loosing e.g., Malta
+        sf::st_filter(sf::st_as_sfc(sf::st_bbox(euboundary))) # bbox to avoid losing e.g., Malta
       
       eu_env <- extract_env(eu_test_data, climate_selection)
-      datasets$eu_occ_env <- eu_env$presences
-      datasets$eu_abs_env <- eu_env$absences
+      
+      if (eu_climate_validation) {
+        datasets$eu_occ_env <- eu_env$presences
+        datasets$eu_abs_env <- eu_env$absences
+      }
+      if (ensemble_validation && use_cv_climate_only) {
+        datasets$ens_occ_env <- eu_env$presences
+        datasets$ens_abs_env <- eu_env$absences
+      }
     }
     
-    # Extract data for validation of ensemble model
-    if(ensemble_validation & !use_cv_climate_only){
+    # Ensemble validation with separate European records 
+    if (ensemble_validation && !use_cv_climate_only) {
       ensemble_test_data <- eu_presabs_perfold %>%
         dplyr::filter(folds == fold)
       
@@ -786,6 +848,10 @@ if (use_cv || use_cv_climate_only) {
       datasets$ens_occ_env <- ensemble_env$presences
       datasets$ens_abs_env <- ensemble_env$absences
     }
+    
+    # eu_* and ens_* records are not the same in every fold,
+    # They are extracted from eu_test_data, which is test_data filtered to Europe, 
+    # and test_data changes with every fold
     
     # Add EU background data for validation of ensemble and Europe
     if (eu_climate_validation || ensemble_validation) {datasets$eu_points  <- eu_points}
@@ -795,10 +861,15 @@ if (use_cv || use_cv_climate_only) {
     #---- Make predictions per model algorithm and dataset and get median --------
     #-----------------------------------------------------------------------------
     
-    median_favourability_climate_perfold[[fold]] <- compute_median_favourability(model,
-                                                                                datasets,
-                                                                                top5_methods,
-                                                                                prev_ratio)
+    # median_favourability_climate_perfold[[fold]] <- compute_median_favourability(model,
+    #                                                                             datasets,
+    #                                                                             top5_methods,
+    #                                                                             prev_ratio)
+    
+    median_favourability_climate_perfold[[fold]] <- compute_median_favourability_LT(model,
+                                                                                    datasets,
+                                                                                    top5_methods,
+                                                                                    prev_ratio)
     
     #-----------------------------------------
     #------- Compute Boyce, AUC, and TSS -----
@@ -923,9 +994,9 @@ if (use_cv || use_cv_climate_only) {
   #-----------------------------------------------------------
   
   median_fav_climate <- compute_median_favourability(model,
-                                                    datasets,
-                                                    top5_methods,
-                                                    prev_ratio)
+                                                     datasets,
+                                                     top5_methods,
+                                                     prev_ratio)
   
   
   #-----------------------------------------
@@ -1024,7 +1095,7 @@ if(use_cv || use_cv_climate_only){
     
     # Store summary in species validation df
     eu_validation_clim_mean <- summarise_validation(eu_validation_climate,
-                                                  validation = "No cross-validation")
+                                                    validation = "No cross-validation")
     
     species_validation_summary <- species_validation_summary%>%
       dplyr::bind_rows(eu_validation_clim_mean)
@@ -1065,6 +1136,9 @@ top5_habitat_methods  <- habitatmodel$top5_models
 habitat_predictors <- habitatmodel$selected_predictors
 rm(habitatmodel)
 
+# add again ID 
+eu_presabs <- eu_presabs %>%
+  dplyr::mutate(ID = dplyr::row_number())
 
 
 #-------------------------------------------------------------------------
@@ -1097,7 +1171,7 @@ eu_habitat_points <- eu_habitat_sub %>%
 tictoc::tic("Spatial cross-validation for habitat model")
 
 if (use_cv) {
-
+  
   #---------------------------------------------------
   #-------- Put fold assignment data in right CRS ----
   #---------------------------------------------------
@@ -1160,9 +1234,9 @@ if (use_cv) {
     # after fitting, some models may fail, so I can't use them
     # so i need to identify only the successful algorithms
     successful_methods_habitat <- as.vector(getModelInfo(habitat_model) %>% 
-                                      filter(success == TRUE) %>% 
-                                      filter(training == TRUE) %>% 
-                                      pull(method))
+                                              filter(success == TRUE) %>% 
+                                              filter(training == TRUE) %>% 
+                                              pull(method))
     
     if(length(successful_methods_habitat) != length(top5_habitat_methods)){
       message("Not all the top 5 algorithms were successful in fold number ", fold, "! Reducing them to ", length(successful_methods_habitat))
@@ -1189,10 +1263,15 @@ if (use_cv) {
     #---- Make predictions per model algorithm and dataset and get median -----
     #--------------------------------------------------------------------------
     
-    median_favourability_habitat_perfold[[fold]]<- compute_median_favourability(habitat_model,
-                                                                                habitat_datasets,
-                                                                                top5_habitat_methods,
-                                                                                prev_ratio)
+    # median_favourability_habitat_perfold[[fold]]<- compute_median_favourability(habitat_model,
+    #                                                                             habitat_datasets,
+    #                                                                             top5_habitat_methods,
+    #                                                                             prev_ratio)
+    
+    median_favourability_habitat_perfold[[fold]]<- compute_median_favourability_LT(habitat_model,
+                                                                                   habitat_datasets,
+                                                                                   top5_habitat_methods,
+                                                                                   prev_ratio)
     #-----------------------------------------
     #------- Compute Boyce, AUC, and TSS -----
     #-----------------------------------------
@@ -1276,9 +1355,9 @@ if (use_cv) {
   #----------------------------------------------------------------------
   
   median_fav_habitat <- compute_median_favourability(habitat_model,
-                                                    habitat_datasets,
-                                                    top5_habitat_methods,
-                                                    prev_ratio)
+                                                     habitat_datasets,
+                                                     top5_habitat_methods,
+                                                     prev_ratio)
   
   
   #-----------------------------------------
@@ -1397,6 +1476,45 @@ if (use_cv) {
   #--------------------------------------------------
   #-          OPTION 2: NO CROSS VALIDATION
   #--------------------------------------------------
+  
+  #-----------------------------------------------------------------
+  # ------ Synthesize median_fav_climate from CV folds -------------
+  #-----------------------------------------------------------------
+  
+  if (!exists("median_fav_climate") && exists("median_favourability_climate_perfold")) {
+    message("Synthesizing median_fav_climate across CV folds...")
+    
+    # 1. Full grid (eu_points): average predictions across all folds per ID
+    eu_points_synth <- dplyr::bind_rows(
+      lapply(median_favourability_climate_perfold, `[[`, "eu_points")
+    ) %>%
+      dplyr::group_by(ID) %>%
+      dplyr::summarise(median_favourability = mean(median_favourability, na.rm = TRUE), .groups = "drop") %>%
+      dplyr::arrange(ID)
+    
+    # 2. European occurrences: combine out-of-fold test predictions and order by ID
+    ens_occ_env_synth <- dplyr::bind_rows(
+      #lapply(median_favourability_climate_perfold, `[[`, "eu_occ_env")
+      lapply(median_favourability_climate_perfold, `[[`, "ens_occ_env")
+    ) %>%
+      dplyr::distinct(ID, .keep_all = TRUE) %>%
+      dplyr::arrange(ID)
+    
+    # 3. European absences/background: combine out-of-fold test predictions and order by ID
+    ens_abs_env_synth <- dplyr::bind_rows(
+      #lapply(median_favourability_climate_perfold, `[[`, "eu_abs_env")
+      lapply(median_favourability_climate_perfold, `[[`, "ens_abs_env")
+    ) %>%
+      dplyr::distinct(ID, .keep_all = TRUE) %>%
+      dplyr::arrange(ID)
+    
+    # Store synthesized object for Option 2
+    median_fav_climate <- list(
+      eu_points   = eu_points_synth,
+      ens_occ_env = ens_occ_env_synth,
+      ens_abs_env = ens_abs_env_synth
+    )
+  }
   
   # Extract median favourability for habitat and climate
   hab_fav <- median_fav_habitat
