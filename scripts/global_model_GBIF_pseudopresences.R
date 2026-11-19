@@ -13,8 +13,7 @@
 
 # Setting up the R environment
 rm(list=ls())
-#setwd("D:/Work/oneSTOP")
-setwd("/lisc/data/scratch/botany/tedeschi/Work/oneSTOP")
+setwd("/lisc/data/scratch/botany/tedeschi/Work/oneSTOP") # --> adjust as needed!
 getwd()
 
 # Load packages
@@ -32,15 +31,25 @@ library(sdm)
 library(sf)
 library(terra)
 
-# Define paths
+# Load functions --> adjust as needed!
 source_path <- paste0(getwd(), "/scripts")
-database_path <- "/lisc/data/work/botany/tedeschi/Work/databases"
-output_path <- file.path(getwd(), "outputs", "runs", "run02")
-
-# Load functions
 source(file.path(source_path, "task5.1", "aux_funs.R"))
 source(file.path(source_path, "wiSDM_v02", "helper_functions.R"))
 source(file.path(getwd(), "slurm", "runs", "run02", "GBIF_pseudopresences", "configurations_GBIF_pseudopresences.R"))
+
+# Define paths --> adjust as needed!
+database_path <- "/lisc/data/work/botany/tedeschi/Work/databases"
+output_path <- file.path(getwd(), "outputs", "runs", "run02")
+pseudopresences_data_path <- file.path(getwd(), "data", "processed", "range_sampling")
+gbif_data_path <- file.path(getwd(), "data", "processed", "GBIF", "IUCN_RL_sp", project_version)
+processed_folder <- paste0(database_path, "/CHELSA_V2.1/chelsa_current")
+globalclimpreds_file <- file.path(processed_folder, "/globalclimpreds.tif")
+eu_climpreds_file <- paste0(processed_folder, "/euclimpreds.tif")
+lulc_folder <- paste0(database_path, "/Chen_et_al_2022/Global_PFT_Projections_recl_eur_mw3")
+continents_path <- paste0(database_path, "/natural_earth/continents/processed")
+ecoregions_path <- paste0(database_path, "/wwf_terrestrial_ecoregions/data/commondata/data0/wwf_terr_ecos.shp")
+realms_path <- paste0(database_path, "/wwf_terrestrial_ecoregions/newRealms_cea.gpkg")
+biasgrids_path <- paste0(database_path, "/wiSDM_biasgrids/processed")
 
 # Assign species name
 args = commandArgs(trailingOnly = TRUE)
@@ -87,13 +96,13 @@ start_time <- Sys.time()
 # NB decide if you want to upload the WGS84 (lat/lon) or CEA WGS84 occurrences
 if(project_projection == "+proj=cea +lat_ts=30 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"){
   
-  global_pseudopresences <- read.csv(paste0("./data/processed/range_sampling/global.occ.cea.wgs84.LL_", project_version, ".csv"))
-  global_gbif <- qs2::qs_read(paste0("./data/processed/GBIF/IUCN_RL_sp/", project_version, "/IUCN_RL_sp_occurrences_cleaned.1981.cea.wgs84.qs"))
+  global_pseudopresences <- read.csv(paste0(pseudopresences_data_path, "/global.occ.cea.wgs84.LL_", project_version, ".csv"))
+  global_gbif <- qs2::qs_read(paste0(gbif_data_path, "/IUCN_RL_sp_occurrences_cleaned.1981.cea.wgs84.qs"))
   
 }else if(project_projection == "EPSG:4326"){
   
-  global_pseudopresences <- read.csv(paste0("./data/processed/range_sampling/global.occ.wgs84.LL_", project_version, ".csv"))
-  global_gbif <- qs2::qs_read(paste0("./data/processed/GBIF/IUCN_RL_sp/", project_version, "/IUCN_RL_sp_occurrences_cleaned.1981.qs"))
+  global_pseudopresences <- read.csv(paste0(pseudopresences_data_path, "/global.occ.wgs84.LL_", project_version, ".csv"))
+  global_gbif <- qs2::qs_read(paste0(gbif_data_path, "/IUCN_RL_sp_occurrences_cleaned.1981.qs"))
   
 }
 
@@ -153,12 +162,6 @@ rm(global_pseudopresences, global_gbif, split_df_pseudopresences, split_df_gbif)
 #------ Define file paths of current environmental layers ---
 #------------------------------------------------------------
 
-#processed_folder <- paste0(database_path, "/CHELSA_V2.1/GLOBAL/climatologies/1981-2010/avg_gcm_na")
-processed_folder <- paste0(database_path, "/CHELSA_V2.1/chelsa_current")
-globalclimpreds_file <- file.path(processed_folder, "/globalclimpreds.tif")
-#eu_climpreds_file <- paste0(database_path, "/CHELSA_V2.1/EUROPE/climatologies/1981-2010/euclimpreds.tif")
-eu_climpreds_file <- paste0(processed_folder, "/euclimpreds.tif")
-
 if(tolower(country_of_interest)!="europe"){
   country_climpreds_file <- file.path(processed_folder, "country_climpreds.tif")
 }else{
@@ -199,13 +202,6 @@ for (period in c("2041-2070","2071-2100")){
 #----------- Load boundary layers -----------
 #--------------------------------------------
 
-# chelsa_example_raster <- terra::rast(globalclimpreds_file)
-# 
-# euboundary <- terra::rast(file.path("data", "external", "habitat", "Agriculture.tif"))%>%
-#   terra::project(chelsa_example_raster[[1]])%>%
-#   terra::crop(terra::ext(-38, 50,  24.29152732065, 72.66652712715))
-
-lulc_folder <- paste0(database_path, "/Chen_et_al_2022/Global_PFT_Projections_recl_eur_mw3")
 euboundary <- terra::rast(paste0(lulc_folder, "/", list.files(lulc_folder)[1]))
 
 if(tolower(country_of_interest)!="europe"){
@@ -248,12 +244,12 @@ world <- terra::project(vect(world),
 if(pseudo_absences_background == "continents"){
   
   # this is how I upload the continents
-  files <- list.files(paste0(database_path, "/natural_earth/continents/processed/"))
+  files <- list.files(continents_path)
   continents <- c()
   
   for(c in files){
     
-    x <- terra::vect(paste0(database_path, "/natural_earth/continents/processed/", c))
+    x <- terra::vect(paste0(continents_path, "/", c))
     
     # aggregate countries so the whole continent is together
     x <- terra::aggregate(x)
@@ -280,7 +276,7 @@ if(pseudo_absences_background == "continents"){
 }else if(pseudo_absences_background == "wwf_ecoregions"){
   
   # this is how we uploaded the WWF ecoregions in the old version
-  wwf_eco <- sf::st_read(paste0(database_path, ("/wwf_terrestrial_ecoregions/data/commondata/data0/wwf_terr_ecos.shp")))
+  wwf_eco <- sf::st_read(ecoregions_path)
   
   # Project the data to the same CRS as the predictors raster stack
   wwf_eco <- sf::st_transform(wwf_eco, st_crs(project_projection)) %>%
@@ -298,7 +294,7 @@ if(pseudo_absences_background == "continents"){
 }else if(pseudo_absences_background == "biomes"){
   
   # load biomes
-  wwf_eco <- sf::st_read(file.path(database_path, "wwf_terrestrial_ecoregions", "newRealms_cea.gpkg"))
+  wwf_eco <- sf::st_read(realms_path)
 
   # check CRS of WWF ecoregions
   crs_env <- crs(wwf_eco, proj = T)
@@ -332,13 +328,13 @@ if(pseudo_absences_background == "continents"){
 # load the biasgrids already projected and resampled
 
 bias_grid_paths <- list(
-  Molluscs = paste0(database_path, "/wiSDM_biasgrids/processed/Molluscs.tif"),
-  Mammals = paste0(database_path, "/wiSDM_biasgrids/processed/Mammals.tif"),
-  Insects = paste0(database_path, "/wiSDM_biasgrids/processed/Insects.tif"),
-  Birds = paste0(database_path, "/wiSDM_biasgrids/processed/Birds.tif"),
-  Amphibians = paste0(database_path, "/wiSDM_biasgrids/processed/Amphibians.tif"),
-  Reptiles = paste0(database_path, "/wiSDM_biasgrids/processed/Reptiles.tif"),
-  Plants = paste0(database_path, "/wiSDM_biasgrids/processed/Plants.tif"))
+  Molluscs = paste0(biasgrids_path, "/Molluscs.tif"),
+  Mammals = paste0(biasgrids_path, "/Mammals.tif"),
+  Insects = paste0(biasgrids_path, "/Insects.tif"),
+  Birds = paste0(biasgrids_path, "/Birds.tif"),
+  Amphibians = paste0(biasgrids_path, "/Amphibians.tif"),
+  Reptiles = paste0(biasgrids_path, "/Reptiles.tif"),
+  Plants = paste0(biasgrids_path, "/Plants.tif"))
 
 invisible(gc())
 
