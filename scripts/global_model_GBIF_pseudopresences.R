@@ -42,9 +42,10 @@ database_path <- "/lisc/data/work/botany/tedeschi/Work/databases"
 output_path <- file.path(getwd(), "outputs", "runs", "run02")
 pseudopresences_data_path <- file.path(getwd(), "data", "processed", "range_sampling")
 gbif_data_path <- file.path(getwd(), "data", "processed", "GBIF", "IUCN_RL_sp", project_version)
-processed_folder <- paste0(database_path, "/CHELSA_V2.1/chelsa_current")
-globalclimpreds_file <- file.path(processed_folder, "/globalclimpreds.tif")
-eu_climpreds_file <- paste0(processed_folder, "/euclimpreds.tif")
+chelsa_cur_path <- paste0(database_path, "/CHELSA_V2.1/chelsa_current")
+chelsa_fut_path <- paste0(database_path, "/CHELSA_V2.1/chelsa_future/europe")
+globalclimpreds_file <- file.path(chelsa_cur_path, "/globalclimpreds.tif")
+eu_climpreds_file <- paste0(chelsa_cur_path, "/euclimpreds.tif")
 lulc_folder <- paste0(database_path, "/Chen_et_al_2022/Global_PFT_Projections_recl_eur_mw3")
 continents_path <- paste0(database_path, "/natural_earth/continents/processed")
 ecoregions_path <- paste0(database_path, "/wwf_terrestrial_ecoregions/data/commondata/data0/wwf_terr_ecos.shp")
@@ -163,7 +164,7 @@ rm(global_pseudopresences, global_gbif, split_df_pseudopresences, split_df_gbif)
 #------------------------------------------------------------
 
 if(tolower(country_of_interest)!="europe"){
-  country_climpreds_file <- file.path(processed_folder, "country_climpreds.tif")
+  country_climpreds_file <- file.path(chelsa_cur_path, "country_climpreds.tif")
 }else{
   country_climpreds_file <- eu_climpreds_file
 }
@@ -183,12 +184,9 @@ for (period in c("2041-2070","2071-2100")){
                               ifelse(scenario == "ssp370", "3-7.0",
                                      ifelse(scenario == "ssp585", "5-8.5", NA)))
     
-    #preprocessed_dir <- file.path("data", "external", "climate", "chelsa_future","country", period,scenario)
-    preprocessed_dir <- file.path(database_path, "CHELSA_V2.1", "chelsa_future","europe", period,scenario)
-    #preprocessed_dir <- paste0(database_path, "/OLD_CHELSA_V2.1/EUROPE/climatologies/", period, "/", scenario_folder)
+    preprocessed_dir <- file.path(chelsa_fut_path, period,scenario)
     
     # Define output file
-    #out_file <- file.path(preprocessed_dir, paste0(period, "_", scenario, "_masked.tif"))
     out_file <- paste0(preprocessed_dir, "/", list.files(preprocessed_dir))
     
     # Store path for later use
