@@ -12,7 +12,7 @@
 
 # Setting up the R environment
 rm(list=ls())
-setwd("/home/biodiversity/tedeschil/Work/oneSTOP") # adjust as needed
+setwd("/lisc/data/scratch/botany/tedeschi/Work/oneSTOP") # --> adjust as needed!
 getwd()
 
 # Load required packages
@@ -24,12 +24,8 @@ sessionInfo()
 # R and Package versions used in this script: 
 # R version 4.4.2 
 
-# Define paths
+# Load functions --> adjust as needed!
 source_path <- paste0(getwd(), "/scripts")
-database_path <- normalizePath("../databases", winslash = "/")
-output_path <- paste0(getwd(), "/outputs")
-
-# Load functions
 source(paste0(source_path, "/task5.1/aux_funs.R"))
 source(paste0(source_path, "/task5.1/helper_functions.R"))
 source(paste0(source_path, "/wiSDM_v02/helper_functions.R"))
@@ -39,8 +35,12 @@ project_version <- "v02"
 projectname <- "onestop_IAS_v02"
 project_projection <- "+proj=cea +lat_ts=30 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs" # either "EPSG:4326" or "+proj=cea +lat_ts=30 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
 
+# Define paths --> adjust as needed!
+database_path <- normalizePath("../databases", winslash = "/")
+output_path <- paste0(getwd(), "/outputs")
 gbif_raw_folder <- paste0("./data/original/GBIF/IAS/", project_version)
 gbif_proc_folder <- paste0("./data/processed/GBIF/IAS/", project_version)
+ias_list_path <- paste0(getwd(), "/outputs/IAS_NJ")
 
 
 
@@ -56,7 +56,7 @@ gbif_proc_folder <- paste0("./data/processed/GBIF/IAS/", project_version)
 # this comes from the "named" IAS threatening the IUCN RL species
 # plus the IAS identified with Natalia Joelson from JRC
 
-ias_list <- read.csv("./outputs/IAS_NJ/IAS_from_IUCN_and_GIDIAS_final.csv")
+ias_list <- read.csv(paste0(ias_list_path, "/IAS_from_IUCN_and_GIDIAS_final.csv"))
 head(ias_list)
 nrow(ias_list) # 1118
 
@@ -410,9 +410,11 @@ accepted_taxonkeys_chunks
 
 ## 3.2 Download
 
-user <- "lisatedeschi"
-email <- "lisatedeschi2@gmail.com"
-pwd <- "Gbilisa17?"
+# --> adjust as needed!
+
+user <- ""
+email <- ""
+pwd <- ""
 
 for(i in 1:length(accepted_taxonkeys_chunks)){
   
@@ -443,7 +445,7 @@ for(i in 1:length(accepted_taxonkeys_chunks)){
  # After it finishes, download your occurrences from GBIF into your PC (with occ_download_get)
  message(paste("============ GBIF import into R for set n.", i))
  gbif_occurrences <- rgbif::occ_download_get(gbif_download_key, 
-                        path = paste0("./data/original/GBIF/IAS/", project_version), 
+                        path = gbif_raw_folder, 
                         overwrite = TRUE)
 
  metadata <- rgbif::occ_download_meta(key = gbif_download_key)
@@ -452,7 +454,7 @@ for(i in 1:length(accepted_taxonkeys_chunks)){
 
 
  ## 3.4 Extract_GBIF_occurrence
- raw.path <- paste0("./data/original/GBIF/IAS/", project_version, "/", gbif_download_key)
+ raw.path <- paste0(gbif_raw_folder, "/", gbif_download_key)
  unzip(paste0(raw.path, ".zip"), exdir = raw.path, overwrite = TRUE)
   
  # load into R
@@ -605,9 +607,6 @@ for(i in 1:length(accepted_taxonkeys_chunks)){
 ## 4.1 Load global occurrences downloaded through GBIF and taxa info for each chunk
 
 # list the .qs files
-gbif_raw_folder <- paste0("./data/original/GBIF/IAS/", project_version)
-gbif_proc_folder <- paste0("./data/processed/GBIF/IAS/", project_version)
-
 x <- list.files(gbif_proc_folder)[grepl(".qs", list.files(gbif_proc_folder))]
 
 # get their numbers
@@ -896,7 +895,7 @@ qs::qsave(cleaned.1981.cea.wgs84,
 # - # - # - # - # - # - # - # - # - # - # - # - # 
 #                                               #
 #                                               #
-#       6. CREATE ONE TAXA INFO FILE           #
+#        6. CREATE ONE TAXA INFO FILE           #
 #                                               #
 #                                               #
 # - # - # - # - # - # - # - # - # - # - # - # - # 

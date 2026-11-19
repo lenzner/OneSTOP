@@ -13,7 +13,7 @@
 
 # Setting up the R environment
 rm(list=ls())
-setwd("/lisc/data/scratch/botany/tedeschi/Work/oneSTOP") # adjust as needed
+setwd("/lisc/data/scratch/botany/tedeschi/Work/oneSTOP") # --> adjust as needed!
 getwd()
 
 # Load required packages
@@ -60,21 +60,24 @@ sessionInfo()
 # dplyr_1.1.4      
 # rgbif_3.8.1 
 
-# Define paths
+# Load functions --> adjust as needed!
 source_path <- paste0(getwd(), "/scripts")
-database_path <- normalizePath("../databases", winslash = "/")
-output_path <- paste0(getwd(), "/outputs")
-
-# Load functions
 source(paste0(source_path, "/task5.1/aux_funs.R"))
 source(paste0(source_path, "/task5.1/helper_functions.R"))
 source(paste0(source_path, "/wiSDM_v02/helper_functions.R"))
 
 # Specify project name and version
 projectname <- "onestop_GBIF_v02"
+project_version <- "v02"
+project_projection <- "+proj=cea +lat_ts=30 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs" # either "EPSG:4326" or "+proj=cea +lat_ts=30 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
 
+# Define paths --> adjust as needed!
+source_path <- paste0(getwd(), "/scripts")
+database_path <- normalizePath("../databases", winslash = "/")
+output_path <- paste0(getwd(), "/outputs")
 gbif_raw_folder <- paste0("./data/original/GBIF/IUCN_RL_sp/", projectname)
 gbif_proc_folder <- paste0("./data/processed/GBIF/IUCN_RL_sp/", projectname)
+sp_list_path <- paste0(getwd(), "IUCN_RL/IUCN_check")
 
 
 
@@ -89,7 +92,7 @@ gbif_proc_folder <- paste0("./data/processed/GBIF/IUCN_RL_sp/", projectname)
 
 
 ## 1.1 Load species list
-sp_list <- read.csv("./outputs/IUCN_RL/IUCN_check/sp_general_info_clean.csv")
+sp_list <- read.csv(paste0(sp_list_path, "/sp_general_info_clean.csv"))
 head(sp_list)
 length(sp_list$scientific_name) # 592 sp
 
@@ -293,7 +296,7 @@ accepted_taxonkeys_chunks <- split(accepted_taxonkeys, ceiling(seq_along(accepte
 
 ## 3.3 Download
 
-# adjust as needed
+# --> adjust as needed!
 
 user <- ""
 email <- ""
@@ -480,9 +483,6 @@ for(i in 1:length(accepted_taxonkeys_chunks)){
 ## 4.1 Load global occurrences downloaded through GBIF and taxa info for each chunk
 
 # list the .qs files
-gbif_raw_folder <- paste0("./data/original/GBIF/IUCN_RL_sp/", project_version)
-gbif_proc_folder <- paste0("./data/processed/GBIF/IUCN_RL_sp/", project_version)
-
 x <- list.files(gbif_proc_folder)[grepl(".qs", list.files(gbif_proc_folder))]
 
 # get their numbers
