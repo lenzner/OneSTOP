@@ -12,7 +12,7 @@
 # Setting up the R environment
 rm(list=ls())
 #setwd("D:/Work/oneSTOP")
-setwd("/lisc/data/scratch/botany/tedeschi/Work/oneSTOP")
+setwd("/lisc/data/scratch/botany/tedeschi/Work/oneSTOP") # --> adjust as needed!
 getwd()
 
 # Load packages
@@ -31,16 +31,25 @@ library(sf)
 library(terra)
 library(blockCV)
 
-# Define paths
+# Load functions --> adjust as needed!
 source_path <- paste0(getwd(), "/scripts")
-database_path <- "/lisc/data/work/botany/tedeschi/Work/databases"
-output_path <- file.path(getwd(), "outputs", "runs", "run01_IAS")
-
-
-# Load functions
 source(file.path(source_path, "task5.1", "aux_funs.R"))
 source(file.path(source_path, "wiSDM_v02", "helper_functions.R"))
 source(file.path(getwd(), "slurm", "runs", "run01_IAS", "GBIF", "configurations_GBIF.R"))
+
+# Define paths --> adjust as needed!
+database_path <- "/lisc/data/work/botany/tedeschi/Work/databases"
+output_path <- file.path(getwd(), "outputs", "runs", "run01_IAS")
+processed_folder <- paste0(database_path, "/CHELSA_V2.1/chelsa_current")
+globalclimpreds_file <- file.path(processed_folder, "/globalclimpreds.tif")
+eu_climpreds_file <- paste0(processed_folder, "/euclimpreds.tif")
+lulc_folder <- paste0(database_path, "/Chen_et_al_2022/Global_PFT_Projections_recl_eur_mw3")
+habitatstack_file <- paste0(lulc_folder, "/global_PFT_2015_recl_eur_mw3.tif")
+continents_path <- paste0(database_path, "/natural_earth/continents/processed")
+ecoregions_path <- paste0(database_path, "/wwf_terrestrial_ecoregions/data/commondata/data0/wwf_terr_ecos.shp")
+realms_path <- paste0(database_path, "/wwf_terrestrial_ecoregions/newRealms_cea.gpkg")
+biasgrids_path <- paste0(database_path, "/wiSDM_biasgrids/processed")
+gbif_data_path <- file.path(getwd(), "data", "processed", "GBIF", "IAS", project_version)
 
 # Assign species name
 args = commandArgs(trailingOnly = TRUE)
@@ -83,30 +92,16 @@ start_time <- Sys.time()
 #-------------------------- Define file paths ----------------------------------
 #-------------------------------------------------------------------------------
 
-# Global climate stack
-# climate_path <- file.path("data", "external", "climate", "chelsa_current","processed", "globalclimpreds.tif")
-processed_folder <- paste0(database_path, "/CHELSA_V2.1/chelsa_current")
-climate_path <- file.path(processed_folder, "globalclimpreds.tif")
-
-# EU climate stack
-# eu_climpreds_path <- file.path("data", "external", "climate", "chelsa_current","processed","euclimpreds.tif")
-eu_climpreds_path <- paste0(processed_folder, "/euclimpreds.tif")
-
-# EU habitat stack
-# habitat_path <- file.path("data", "external", "habitat", "processed", "habitat_stack.tif")
-
-habitat_path <- paste0(database_path, "/Chen_et_al_2022/Global_PFT_Projections_recl_eur_mw3/global_PFT_2015_recl_eur_mw3.tif")
-
 # Biomes/ecoregions
 if(pseudo_absences_background == "continents"){
   
   # this is how I upload the continents
-  files <- list.files(paste0(database_path, "/natural_earth/continents/processed/"))
+  files <- list.files(continents_path)
   continents <- c()
   
   for(c in files){
     
-    x <- terra::vect(paste0(database_path, "/natural_earth/continents/processed/", c))
+    x <- terra::vect(paste0(continents_path, "/", c))
     
     # aggregate countries so the whole continent is together
     x <- terra::aggregate(x)
@@ -133,7 +128,7 @@ if(pseudo_absences_background == "continents"){
 }else if(pseudo_absences_background == "wwf_ecoregions"){
   
   # this is how we uploaded the WWF ecoregions in the old version
-  wwf_eco <- sf::st_read(paste0(database_path, ("/wwf_terrestrial_ecoregions/data/commondata/data0/wwf_terr_ecos.shp")))
+  wwf_eco <- sf::st_read(ecoregions_path)
   
   # Project the data to the same CRS as the predictors raster stack
   wwf_eco <- sf::st_transform(wwf_eco, st_crs(project_projection)) %>%
@@ -151,7 +146,7 @@ if(pseudo_absences_background == "continents"){
 }else if(pseudo_absences_background == "biomes"){
   
   # load biomes
-  wwf_eco <- sf::st_read(file.path(database_path, "wwf_terrestrial_ecoregions", "newRealms_cea.gpkg"))
+  wwf_eco <- sf::st_read(realms_path)
   
   # check CRS of biomes
   crs_env <- crs(wwf_eco, proj = T)
@@ -167,14 +162,14 @@ if(pseudo_absences_background == "continents"){
 #--- Load global occurrences and taxa info---
 #--------------------------------------------
 
-# NB decide if you want to upload the WGS84 (lat/lon) or CEA WGS84 occurrences
+# needed only for the taxonkey
 if(project_projection == "+proj=cea +lat_ts=30 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"){
   
-  global_gbif <- qs2::qs_read(paste0("./data/processed/GBIF/IAS/", project_version, "/IAS_occurrences_cleaned.1981.cea.wgs84.qs"))
+  global_gbif <- qs2::qs_read(paste0(gbif_data_path, "/IAS_occurrences_cleaned.1981.cea.wgs84.qs"))
   
 }else if(project_projection == "EPSG:4326"){
   
-  global_gbif <- qs2::qs_read(paste0("./data/processed/GBIF/IAS/", project_version, "/IAS_occurrences_cleaned.1981.qs"))
+  global_gbif <- qs2::qs_read(paste0(gbif_data_path, "/IAS_occurrences_cleaned.1981.qs"))
   
 }
 
@@ -197,12 +192,6 @@ rm(global_gbif)
 #------------ Load euboundary  --------------
 #--------------------------------------------
 
-# euboundary_path<-file.path("data", "external", "GIS", "Europe", "EUboundary.shp")
-# euboundary<-sf::st_read(euboundary_path)
-# euboundary_wgs84<-euboundary%>%
-#   sf::st_transform(crs = 4326)
-
-lulc_folder <- paste0(database_path, "/Chen_et_al_2022/Global_PFT_Projections_recl_eur_mw3")
 euboundary <- terra::rast(paste0(lulc_folder, "/", list.files(lulc_folder)[1]))
 
 if(tolower(country_of_interest)!="europe"){
@@ -233,7 +222,7 @@ climate_stack <- climate_stack %>%
   tidyterra::rename("CHELSA_precipDriestMon_14" = "CHELSA_bio14_1981-2010_V.2.1")  %>%
   tidyterra::rename("CHELSA_precipSeasonality_15" = "CHELSA_bio15_1981-2010_V.2.1") 
 
-habitat_stack <- terra::rast(habitat_path)
+habitat_stack <- terra::rast(habitatstack_file)
 # get %
 habitat_stack <- habitat_stack/10000
 
@@ -1066,7 +1055,7 @@ rm(habitatmodel)
 #-------------------------------------------------------------------------
 
 # Load again just in case
-habitat_stack <- terra::rast(habitat_path)
+habitat_stack <- terra::rast(habitatstack_file)
 # get %
 habitat_stack <- habitat_stack/10000
 
@@ -1135,7 +1124,7 @@ if (use_cv) {
     #--------------------------------------
     
     # Load again just in case
-    habitat_stack <- terra::rast(habitat_path)
+    habitat_stack <- terra::rast(habitatstack_file)
     # get %
     habitat_stack <- habitat_stack/10000
     
@@ -1228,7 +1217,7 @@ if (use_cv) {
   #------------------------------------------------
   
   # Load again just in case
-  habitat_stack <- terra::rast(habitat_path)
+  habitat_stack <- terra::rast(habitatstack_file)
   # get %
   habitat_stack <- habitat_stack/10000
   

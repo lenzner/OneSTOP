@@ -13,13 +13,15 @@
 
 # Setting up the R environment
 rm(list=ls())
-setwd("D:/Work/oneSTOP") # adjust as needed
-#setwd("/home/biodiversity/tedeschil/R/range_fit")
+setwd("D:/Work/oneSTOP") # --> adjust as needed!
 getwd()
 
 # Load required packages
 pacman::p_load(viridis, rredlist, tidyverse)
 sessionInfo()
+
+# Define paths # --> adjust as needed!
+output_path <- file.path(getwd(), "outputs")
 
 # R and Package versions used in this script: 
 # R version 4.4.2 
@@ -378,9 +380,9 @@ clean_assessments <- function(x) {
     sp <- sub(" ", "_", unique(x$taxon$scientific_name)) 
       
       # create directory for species sp, if it doesn't exist
-      if( !dir.exists(paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp)) ){
+      if( !dir.exists(paste0(output_path, "/IUCN_RL/rredlist_assessments/", cat, "/", sp)) ){
         
-        dir.create(paste0("./outputs/IUCN_RL/rredlist_assessments/", cat, "/", sp))
+        dir.create(paste0(output_path, "/IUCN_RL/rredlist_assessments/", cat, "/", sp))
         
       }
       
@@ -448,9 +450,9 @@ for(cat in c("CR", "EN", "VU", "NT")){
   y <- get(paste0("rl_", cat, "_assessments"))
   
   # create directory for category cat, if it doesn't exist
-  if( !dir.exists(paste0("./outputs/IUCN_RL/rredlist_assessments/", cat)) ){
+  if( !dir.exists(paste0(output_path, "/IUCN_RL/rredlist_assessments/", cat)) ){
     
-    dir.create(paste0("./outputs/IUCN_RL/rredlist_assessments/", cat))
+    dir.create(paste0(output_path, "/IUCN_RL/rredlist_assessments/", cat))
     
   }
   
